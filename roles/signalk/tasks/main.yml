@@ -6,6 +6,29 @@
 - name: Build and install vxcan kernel module
   include_tasks: vxcan.yml
 
+- name: Script for monitoring docker start events for signalk-server container
+  copy:
+    src: "docker-events-signalk.sh"
+    dest: "/home/{{ signalk_user }}/docker-events-signalk.sh"
+    mode: "0755"
+
+- name: Systemd unit file for docker monitoring script
+  template:
+    src: "docker-events-signalk.service.j2"
+    dest: "/etc/systemd/system/docker-events-signalk.service"
+    mode: "0755"
+    owner: "root"
+    group: "root"
+  notify:
+    - reload-systemctl
+
+- name: Enable systemd service for docker monitoring script
+  systemd:
+    name: "docker-events-signalk.service"
+    enabled: true
+    state: "started"
+    daemon_reload: true
+
 - name: Create folders
   file:
     path: "/home/{{ signalk_user }}/{{ item }}"

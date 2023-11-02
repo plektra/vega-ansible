@@ -1,4 +1,11 @@
 ---
 - name: restart-signalk-server
   become: yes
-  command: docker restart signalk-server
+  docker_container:
+    name: "signalk-server"
+    restart: true
+
+- name: reload-systemctl
+  become: yes
+  systemd:
+    daemon_reload: yes

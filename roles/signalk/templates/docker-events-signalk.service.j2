@@ -1,0 +1,13 @@
+[Unit]
+Description=Monitor Signal K Docker container start events
+After=docker.service
+BindsTo=docker.service
+ReloadPropagatedFrom=docker.service
+
+[Service]
+Type=simple
+ExecStart=/home/{{signalk_user}}/docker-events-signalk.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
