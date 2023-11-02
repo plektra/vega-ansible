@@ -1,0 +1,12 @@
+---
+- name: Run Grafana docker container
+  docker_container:
+    name: "grafana"
+    hostname: "grafana"
+    restart_policy: "always"
+    privileged: true
+    ports:
+      - "3000:3000"
+    image: "grafana/grafana-oss:latest"
+    networks:
+      - name: "vega"

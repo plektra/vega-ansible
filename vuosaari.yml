@@ -1,0 +1,14 @@
+---
+- name: Set up RPi signalk instance
+  hosts: vuosaari
+  remote_user: pi
+  become: yes
+  handlers:
+    - import_tasks: handlers/handlers.yml
+  roles:
+    - common
+    - docker-host
+    - influxdb
+    - grafana
+    - signalk
+    - reverse-proxy

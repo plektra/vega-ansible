@@ -1,0 +1,38 @@
+---
+- name: Mosquitto folders
+  file:
+    path: "/home/lari/mosquitto/{{ item }}"
+    owner: lari
+    group: docker
+    mode: "0775"
+    recurse: yes
+    state: directory
+  loop:
+    - "config"
+    - "data"
+    - "log"
+
+- name: Mosquitto configuration file
+  copy:
+    src: mosquitto.conf
+    dest: "/home/lari/mosquitto/config/mosquitto.conf"
+    owner: lari
+    group: docker
+    mode: "0644"
+
+- name: Run Mosquitto docker container
+  docker_container:
+    name: "mosquitto"
+    restart_policy: "on-failure"
+    user: "1000:998"
+    ports:
+      - "1883:1883"
+      - "8883:8883"
+      - "9001:9001"
+    image: "eclipse-mosquitto:2"
+    volumes:
+      - "/home/lari/mosquitto/config:/mosquitto/config"
+      - "/home/lari/mosquitto/data:/mosquitto/data"
+      - "/home/lari/mosquitto/log:/mosquitto/log"
+    networks:
+      - name: "vega"

@@ -1,0 +1,48 @@
+---
+
+- name: MCP2515 can device 0
+  lineinfile:
+    dest=/boot/config.txt
+    regexp='^dtoverlay=mcp2515-can0'
+    line="dtoverlay=mcp2515-can0,oscillator=16000000,interrupt=23"
+  notify: reboot
+
+- name: MCP2515 can device 1
+  lineinfile:
+    dest=/boot/config.txt
+    regexp='^dtoverlay=mcp2515-can1'
+    line="dtoverlay=mcp2515-can1,oscillator=16000000,interrupt=25"
+  notify: reboot
+
+- name: Enable SPI overlay
+  lineinfile:
+    dest=/boot/config.txt
+    regexp='^dtoverlay=spi-bcm2835-overlay'
+    line="dtoverlay=spi-bcm2835-overlay"
+  notify: reboot
+
+- name: Enable UART
+  lineinfile:
+    dest=/boot/config.txt
+    regexp='^enable_uart=1'
+    line="dtparam=i2c_arm=on"
+  notify: reboot
+
+- name: Enable SPI
+  lineinfile:
+    dest=/boot/config.txt
+    regexp='^dtparam=spi=on'
+    line="dtparam=spi=on"
+  notify: reboot
+
+- name: Setup CAN devices
+  template:
+    src: can.j2
+    dest: "/etc/network/interfaces.d/{{ item }}"
+    mode: '0644'
+  vars:
+    interface: "{{ item }}"
+  notify: reboot
+  loop:
+    - can0
+    - can1

@@ -1,0 +1,42 @@
+---
+- name: Update raspi-config
+  become: yes
+  apt:
+    name: raspi-config
+    update_cache: yes
+    state: present
+
+- name: Set boot behaviour to console autologin
+  become: yes
+  shell: "raspi-config nonint do_boot_behaviour B2"
+
+- name: Enable overscan
+  become: yes
+  shell: "raspi-config nonint do_overscan 1"
+
+- name: Set to wait for network status
+  become: yes
+  shell: "raspi-config nonint do_boot_wait 1"
+
+# - name: Install plymouth
+#   become: yes
+#   apt:
+#     name: rpd-plym-splash
+#     state: present
+
+# - name: Copy splash image
+#   become: yes
+#   copy:
+#     src: splash.png
+#     dest: /usr/share/plymouth/themes/pix/splash.png
+
+# - name: Enable splash screen
+#   shell: "raspi-config nonint do_boot_splash 1"
+
+- name: Reboot
+  become: yes
+  shell: "sleep 1 && shutdown -r now +1"
+  async: yes
+  poll: 0
+  notify:
+    - wait-for-reboot

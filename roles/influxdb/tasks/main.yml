@@ -1,0 +1,29 @@
+---
+- name: Influxdb data folder
+  file:
+    path: "~/.influxdb"
+    owner: pi
+    group: pi
+    mode: "0777"
+    state: directory
+
+- name: Run influxdb docker container
+  docker_container:
+    name: "influxdb"
+    hostname: "influxdb"
+    restart_policy: "always"
+    ports:
+      - "8086:8086"
+    image: "influxdb:latest"
+    volumes:
+      - "~/.influxdb:/var/lib/influxdb"
+    env:
+      INFLUXDB_DATA_CACHE_SNAPSHOT_MEMORY_SIZE: "2621440"
+      DOCKER_INFLUXDB_INIT_MODE: "setup"
+      DOCKER_INFLUXDB_INIT_USERNAME: "signalk"
+      DOCKER_INFLUXDB_INIT_PASSWORD: "signalkpassword"
+      DOCKER_INFLUXDB_INIT_ORG: "signalk"
+      DOCKER_INFLUXDB_INIT_BUCKET: "signalk"
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "signalk_token"
+    networks:
+      - name: "vega"

@@ -1,0 +1,6 @@
+---
+- name: Set up RPi
+  hosts: all
+  remote_user: pi
+  roles:
+    - raspi

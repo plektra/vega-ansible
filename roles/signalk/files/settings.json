@@ -1,0 +1,46 @@
+{
+  "interfaces": {
+    "applicationData": true,
+    "appstore": true,
+    "logfiles": true,
+    "nmea-tcp": true,
+    "playground": true,
+    "plugins": true,
+    "providers": true,
+    "rest": true,
+    "tcp": true,
+    "webapps": true,
+    "ws": true
+  },
+  "ssl": false,
+  "pipedProviders": [
+    {
+      "pipeElements": [
+        {
+          "type": "providers/simple",
+          "options": {
+            "logging": false,
+            "type": "NMEA2000",
+            "subOptions": {
+              "type": "canbus-canboatjs",
+              "interface": "vxcan3",
+              "uniqueNumber": 934968,
+              "useCanName": false
+            }
+          }
+        }
+      ],
+      "id": "1",
+      "enabled": true
+    }
+  ],
+  "mdns": false,
+  "wsCompression": false,
+  "enablePluginLogging": true,
+  "pruneContextsMinutes": 60,
+  "keepMostRecentLogsOnly": true,
+  "logCountToKeep": 72,
+  "security": {
+    "strategy": "./dummysecurity"
+  }
+}

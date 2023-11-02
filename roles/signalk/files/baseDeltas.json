@@ -1,0 +1,36 @@
+[
+  {
+    "context": "vessels.self",
+    "updates": [
+      {
+        "values": [
+          {
+            "path": "",
+            "value": {
+              "uuid": "urn:mrn:signalk:uuid:e199f580-9492-4524-afcc-6c11842b09c0",
+              "name": "Vega",
+              "communication": {
+                "callsignVhf": "OH7028"
+              }
+            }
+          },
+          {
+            "path": "design.beam",
+            "value": 4.16
+          },
+          {
+            "path": "design.airHeight",
+            "value": 7
+          },
+          {
+            "path": "design.aisShipType",
+            "value": {
+              "name": "Tug",
+              "id": 52
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

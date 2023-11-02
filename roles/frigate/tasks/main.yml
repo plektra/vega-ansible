@@ -1,0 +1,44 @@
+---
+- name: Media folder
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0777"
+    state: directory
+  loop:
+    - "/media/frigate"
+
+- name: Frigate configuration file
+  copy:
+    src: config.yml
+    dest: "/home/lari/frigate/config.yml"
+    owner: lari
+    group: docker
+    mode: "0644"
+
+- name: Run Frigate docker container
+  docker_container:
+    name: "frigate"
+    restart_policy: "always"
+    privileged: true
+    ports:
+      - "5000:5000"
+      - "1935:1935"
+    image: "ghcr.io/blakeblackshear/frigate:stable-tensorrt"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/home/lari/frigate/config.yml:/config/config.yml:ro"
+      - "/media/frigate:/media/frigate"
+    mounts:
+      - type: "tmpfs"
+        target: "/tmp/cache"
+        tmpfs_size: 1G
+    shm_size: 64M
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+      - "/dev/dri/renderD128"
+    env:
+      FRIGATE_RTSP_PASSWORD: "Vega1914"
+    networks:
+      - name: "vega"

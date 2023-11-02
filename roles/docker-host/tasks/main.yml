@@ -1,0 +1,61 @@
+---
+- name: Install prerequisites
+  apt:
+    pkg:
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - python3-pip
+      - virtualenv
+    state: latest
+    update_cache: true
+
+- name: Folder for apt keyrings
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+
+- name: Download docker apt gpg key
+  shell: 'curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg'
+
+- name: Add docker apt repository
+  shell: 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null'
+
+- name: Install Docker
+  apt:
+    pkg:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: latest
+    update_cache: true
+
+- name: Install Docker module for python
+  pip:
+    name: docker
+
+- name: Add docker group
+  group:
+    name: docker
+
+- name: Add lari to docker group
+  user:
+    name: lari
+    groups: docker
+    append: yes
+
+- name: Enable Docker service
+  systemd:
+    name: docker
+    enabled: true
+
+- name: Enable Containerd service
+  systemd:
+    name: containerd
+    enabled: true
+
+- name: Custom Docker network
+  docker_network:
+    name: vega

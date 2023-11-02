@@ -1,0 +1,34 @@
+mqtt:
+  host: mosquitto
+  port: 1883
+
+detectors:
+  coral:
+    type: edgetpu
+    device: usb
+
+cameras:
+  bryga:
+    ffmpeg:
+      inputs:
+        - path: rtsp://admin:{FRIGATE_RTSP_PASSWORD}@10.2.0.51/Streaming/Channels/101
+          roles:
+            - detect
+            - record
+      hwaccel_args: preset-intel-qsv-h264
+    detect:
+      enabled: True
+      width: 1920
+      height: 1080
+    record:
+      enabled: True
+    snapshots:
+      enabled: True
+    motion:
+      threshold: 50
+    objects:
+      track:
+        - person
+      filters:
+        person:
+          threshold: 0.8

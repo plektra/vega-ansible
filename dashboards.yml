@@ -1,0 +1,6 @@
+---
+- name: Set up RPi dashboard instances
+  hosts: dashboards
+  remote_user: pi
+  roles:
+    - kiosk

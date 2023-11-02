@@ -1,0 +1,130 @@
+---
+
+- name: Install Xorg libs and utils
+  become: yes
+  apt:
+    pkg:
+      - xserver-xorg
+      - xinit
+      - x11-xserver-utils
+    state: latest
+    install_recommends: no
+
+- name: Install Openbox
+  become: yes
+  apt:
+    name: openbox
+    state: latest
+    install_recommends: no
+
+- name: Install Chromium
+  become: yes
+  apt:
+    name: chromium-browser
+    state: latest
+    install_recommends: no
+
+- name: Install wmctrl
+  become: yes
+  apt:
+    name: wmctrl
+    state: latest
+    install_recommends: no
+
+- name: Install python3 and pip
+  become: yes
+  apt:
+    name: python3-pip
+    state: latest
+    install_recommends: no
+
+- name: Install libxslt
+  become: yes
+  apt:
+    name: libxslt-dev
+    state: latest
+
+- name: Install python lxml module needed by the ansible xml module
+  become: yes
+  pip:
+    name: lxml
+    state: latest
+
+- name: Copy Touchegg deb package
+  become: yes
+  copy:
+    src: touchegg_2.0.13_armhf.deb
+    dest: /tmp/touchegg_2.0.13_armhf.deb
+
+- name: Install Touchegg
+  become: yes
+  apt:
+    deb: /tmp/touchegg_2.0.13_armhf.deb
+
+- name: Configure Touchegg
+  become: yes
+  template:
+    src: touchegg.conf.j2
+    dest: /usr/share/touchegg/touchegg.conf
+  register: _touchegg_config
+
+- name: Configure Openbox autostart
+  become: yes
+  template:
+    src: autostart.j2
+    dest: /etc/xdg/openbox/autostart
+
+- name: Configure Openbox rc.xml
+  become: yes
+  xml:
+    path: /etc/xdg/openbox/rc.xml
+    xpath: /x:openbox_config/{{ item.xpath }}
+    value: "{{ item.value }}"
+    namespaces:
+      x: http://openbox.org/3.4/rc
+  with_items: "{{ openbox_config }}"
+  register: _openbox_config
+
+- name: Configure Chromium url
+  become: yes
+  copy:
+    dest: /etc/xdg/openbox/environment
+    content: export KIOSK_URL=http://vuosaari.vega:8080/plugins/signalk-node-red/redApi/ui/
+
+# - name: Disable Chromium error messages
+#   shell: |
+#     sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' ~/.config/chromium/'Local State'
+#     sed -i 's/"exited_cleanly":false/"exited_cleanly":true/; s/"exit_type":"[^"]\+"/"exit_type":"Normal"/' ~/.config/chromium/Default/Preferences
+
+- name: Start X server on boot
+  copy:
+    dest: ~/.bash_profile
+    content: |
+      [[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && startx -- -nocursor
+
+- name: Configure boot config based on boot_config
+  become: yes
+  lineinfile:
+    line: "{{ item.key }}={{ item.value }}"
+    dest: /boot/config.txt
+    regexp: "^{{ item.key }}="
+  with_dict: "{{ boot_config }}"
+  register: _boot_config
+
+- name: Configure boot config based on boot_config_lines
+  become: yes
+  lineinfile:
+    line: "{{ item }}"
+    dest: /boot/config.txt
+    regexp: "^{{ item }}"
+  with_items: "{{ boot_config_lines }}"
+  register: _boot_config_lines
+
+- name: Reboot
+  shell: "sleep 1 && shutdown -r now +1"
+  become: yes
+  async: yes
+  poll: 0
+  notify:
+    - wait-for-reboot
+  when: _boot_config.changed or _boot_config_lines.changed or _openbox_config.changed or _touchegg_config.changed

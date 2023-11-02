@@ -1,0 +1,9 @@
+---
+- name: Set up camera surveillance server
+  hosts: santio
+  remote_user: lari
+  become: yes
+  roles:
+    - docker-host
+    - mqtt
+    - frigate

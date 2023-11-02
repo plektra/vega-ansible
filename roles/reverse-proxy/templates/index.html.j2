@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <title>VEGA</title>
+    <script>
+    function setHref() {
+      document.getElementById('signalk').href = window.location.protocol + "//" + window.location.hostname + ":8080/";
+      document.getElementById('grafana').href = window.location.protocol + "//" + window.location.hostname + ":3000/";
+      document.getElementById('frigate').href = window.location.protocol + "//" + "santio:5000/";
+    }
+    </script>
+  </head>
+  <body onload="setHref()">
+    <h1>VEGA</h1>
+    <p><a href="/" id="signalk">Signal-K Server</a></p>
+    <p><a href="/" id="grafana">Grafana</a></p>
+    <p><a href="/" id="frigate">Frigate</a></p>
+    <!--<p><a href="/ruutu1/">Dashboard</a></p>-->
+  </body>
+</html>

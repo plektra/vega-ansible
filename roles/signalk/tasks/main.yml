@@ -1,0 +1,82 @@
+---
+
+- name: Install can bus
+  include_tasks: mcp_2515.yml
+
+- name: Build and install vxcan kernel module
+  include_tasks: vxcan.yml
+
+- name: Create folders
+  file:
+    path: "/home/{{ signalk_user }}/{{ item }}"
+    state: directory
+    mode: "0777"
+  loop:
+    - ".signalk"
+    - ".signalk/plugin-config-data"
+
+- name: Copy SignalK configs
+  copy:
+    src: "{{ item }}"
+    dest: "/home/{{ signalk_user }}/.signalk/"
+    mode: "0777"
+  loop:
+    - baseDeltas.json
+    - settings.json
+  notify: restart-signalk-server
+
+- name: Copy InfluxDB config
+  copy:
+    src: "signalk-to-influxdb2.json"
+    dest: "/home/{{ signalk_user }}/.signalk/plugin-config-data/signalk-to-influxdb2.json"
+    mode: "0777"
+  notify: restart-signalk-server
+
+- name: Copy plugins package.json
+  copy:
+    src: "plugin-package.json"
+    dest: "/home/{{ signalk_user }}/.signalk/package.json"
+    owner: "{{ signalk_user }}"
+  notify: restart-signalk-server
+
+- name: Install plugins
+  command: docker run -it --rm -v /home/{{ signalk_user }}/.signalk:/home/node/.signalk --entrypoint "/bin/bash" signalk/signalk-server:linux-armhf-latest -c "cd /home/node/.signalk && npm i --no-progress --no-color"
+
+- name: Run SignalK Server docker container
+  docker_container:
+    name: "signalk-server"
+    hostname: "signalk"
+    restart_policy: "always"
+    ports:
+      - "8080:3000"
+      - "10110:10110"
+      - "3858:3858"
+      - "8887:8887/udp"
+      - "8888:8888/udp"
+      - "8889:8889/udp"
+      - "9997:9997"
+      - "9998:9998"
+      - "9999:9999"
+    image: "cr.signalk.io/signalk/signalk-server:latest"
+    volumes:
+      - "/home/{{ signalk_user }}/.signalk:/home/node/.signalk"
+    networks:
+      - name: "vega"
+  register: signalk_container
+
+- name: Add virtual can interfaces and gateways for the running container
+  become: yes
+  shell: |
+    ip link add vxcan{{ item | int + item}} type vxcan peer name vxcan{{ item | int + item | int + 1 }} || true
+    ip link set vxcan{{ item | int + item | int + 1 }} netns {{ signalk_container.container.State.Pid }} || true
+    ip link set vxcan{{ item | int + item }} up || true
+    nsenter -t {{ signalk_container.container.State.Pid }} -n ip link set vxcan{{ item | int + item | int + 1 }} up || true
+    cangw -A -s can{{ item }} -d vxcan{{ item | int + item }} -e || true
+    cangw -A -s vxcan{{ item | int + item}} -d can{{ item }} -e || true
+  loop: [0, 1]
+  when: signalk_container.changed
+
+- name: Following can network devices are routed to the running container
+  debug:
+    msg: "can{{ item }} -> vxcan{{ item | int + item | int + 1 }}"
+  loop: [0, 1]

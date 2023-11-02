@@ -1,0 +1,80 @@
+---
+
+# Virtual can device setup for docker containers with bridge networks
+# This will most likely fail if the kernel has been upgraded on the RPi
+
+- name: Install can-utils and kernel headers for compiling
+  apt:
+    pkg:
+      - can-utils
+      - raspberrypi-kernel-headers
+    state: latest
+    update_cache: true
+
+- name: Kernel version
+  command: uname -r
+  register: uname_result
+  changed_when: uname_result.rc != 0
+
+- name: Kernel git branch
+  shell: dpkg -l raspberrypi-kernel | tail -1 | tr -s ' ' | cut -d' ' -f3 | cut -d':' -f2 | cut -d'-' -f1
+  register: kernel_branch
+  changed_when: kernel_branch.rc != 0
+
+- name: Create folder for vxcan sources
+  file:
+    path: "/home/{{ signalk_user }}/vxcan"
+    state: directory
+    mode: "0777"
+
+- name: Create Makefile for building vxcan
+  template:
+    src: "Makefile.j2"
+    dest: "/home/{{ signalk_user }}/vxcan/Makefile"
+    mode: "0777"
+  vars:
+    build_path: "/home/{{ signalk_user }}/vxcan"
+  register: vxcan_makefile
+
+- name: Download vxcan source
+  get_url:
+    url: "https://raw.githubusercontent.com/raspberrypi/linux/{{ kernel_branch.stdout }}/drivers/net/can/vxcan.c"
+    dest: "/home/{{ signalk_user }}/vxcan/vxcan.c"
+  register: vxcan_source
+
+- name: Build vxcan
+  make:
+    chdir: "/home/{{ signalk_user }}/vxcan"
+  become: yes
+  when: (vxcan_source.changed) or (uname_result.changed)
+  register: vxcan_build
+
+- name: Change ownership and permissions of built vxcan kernel module
+  file:
+    path: "/home/{{ signalk_user }}/vxcan/vxcan.ko"
+    owner: root
+    group: root
+    mode: '0644'
+  when: vxcan_build.changed
+
+- name: Copy vxcan kernel module to correct location
+  copy:
+    remote_src: true
+    src: "/home/{{ signalk_user }}/vxcan/vxcan.ko"
+    dest: "/lib/modules/{{ uname_result.stdout }}/kernel/net/can/vxcan.ko"
+  become: yes
+  when: vxcan_build.changed
+  register: vxcan_module_copied
+
+- name: Load kernel module dependencies
+  command: "/usr/sbin/depmod -A"
+  when: vxcan_build.changed
+
+- name: Add vxcan and can-gw kernel modules
+  community.general.modprobe:
+    name: "{{ item }}"
+    persistent: present
+  loop:
+    - "vxcan"
+    - "can-gw"
+  when: vxcan_build.changed

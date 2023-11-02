@@ -1,0 +1,32 @@
+---
+- name: Create nginx folders
+  file:
+    path: "/home/pi/{{ item }}"
+    state: directory
+  loop:
+    - ".nginx"
+    - ".nginx/conf.d"
+    - ".nginx/html"
+
+- name: Copy nginx config
+  copy: src=files/nginx.conf dest=/home/pi/.nginx/vega.conf
+  notify: restart-nginx
+
+- name: copy index.html
+  template: src=templates/index.html.j2 dest=/home/pi/.nginx/html/index.html
+    mode=0644
+  notify: restart-nginx
+
+- name: Run Nginx docker container
+  docker_container:
+    name: "nginx"
+    restart_policy: "always"
+    privileged: false
+    ports:
+      - "80:80"
+    image: "nginx:latest"
+    volumes:
+      - "/home/pi/.nginx/html:/usr/share/nginx/html/:ro"
+      - "/home/pi/.nginx/vega.conf:/etc/nginx/conf.d/vega.conf:ro"
+    networks:
+      - name: "vega"

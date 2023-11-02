@@ -1,0 +1,11 @@
+xset -dpms            # turn off display power management system
+xset s noblank        # turn off screen blanking
+xset s off            # turn off screen saver
+
+# Run Chromium in kiosk mode
+touchegg &
+wmctrl -s 0
+chromium-browser  --noerrdialogs --disable-infobars --kiosk --enable-features=OverlayScrollbar --check-for-update-interval=31536000 --disable-gpu $KIOSK_URL &
+ffplay -fs -vf scale=1024:600 'rtsp://admin:Vega1914@10.2.0.51/Streaming/Channels/101' -v -8 &
+sleep 15s
+wmctrl -r `wmctrl -l | grep rtsp | tr -s ' ' | cut -d' ' -f2` -t 1

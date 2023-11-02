@@ -1,0 +1,13 @@
+{
+  "name": "signalk-server-config",
+  "version": "0.0.1",
+  "description": "This file is here to track plugin and webapp installs.",
+  "repository": {},
+  "license": "Apache-2.0",
+  "dependencies": {
+    "signalk-to-influxdb2": "^1.3.0",
+    "@signalk/signalk-node-red": "^3.0.0",
+    "@signalk/node-red-embedded": "^2.0.0",
+    "signalk-datetime": "^1.0.0"
+  }
+}
